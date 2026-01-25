@@ -9,8 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## HOBO MX20L - Tapir Valley Wetland Data
-
 ```{r}
 # packages
 library(plotly)
@@ -19,6 +17,12 @@ library(knitr)
 library(readxl)
 ```
 
+## HOBO MX20L - Placement Map Image
+```{r echo=FALSE, fig.algin='left', out.width='90%'} 
+knitr::include_graphics("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/HOBO_Map.png")
+```
+
+## HOBO MX20L - Upload Code .xlsx 
 ```{r echo = TRUE}
 #HOBO 1 - 22304971 | Area Amplexo | Date Installed: 2025-06-14 | Data Range: 2025-07-19 16:30:00 to 2026-01-03 11:00:00
 
@@ -46,14 +50,7 @@ hobo5_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Wor
 hobo5_clean <- na.omit(hobo5_raw) #remove the NA rows, no water level values due to compensation overlap 
 ```
 
-## HOBO MX20L Placement - Map Image
-```{r echo=FALSE, fig.algin='left', out.width='90%'} 
-knitr::include_graphics("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/HOBO_Map.png")
-```
-
-
-## Plotly - Water Level Data (m) 
-
+## HOBO MX20L - Plotly Water Level Data (m)
 ```{r}
 figall_HOBO_wl <- plot_ly(width = 900, height = 500) %>%
   # Add HOBO#1
@@ -93,3 +90,4 @@ figall_HOBO_wl <- plot_ly(width = 900, height = 500) %>%
 ```{r}
 figall_HOBO_wl
 ```
+
