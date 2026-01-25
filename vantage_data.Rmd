@@ -1,5 +1,5 @@
 ---
-title: "vantage_data"
+title: "Vantage Pro 2 Weather Station Data"
 author: "Valeria Aspinall"
 date: "2026-01-25"
 output: html_document
@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# 2025 Data Upload, Reorganization & Identifying Gaps 
 ```{r}
 library(knitr)
 library(readr)
@@ -19,17 +20,15 @@ library(plotly)
 library(tidyverse)
 ```
 
-# 2025 
-
 ## 06-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path 
 raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_jun25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", skip = 2, col_names = col_names)
+raw_jun25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_jun25
 data_jun25 <- raw_jun25 %>%
@@ -38,11 +37,14 @@ data_jun25 <- raw_jun25 %>%
 
 #4. ensuring timestamp is in the correct format 
 data_jun25 <- data_jun25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
 
+## 06-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+```{r}
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of june 2025 
-start_jun25 <- as.POSIXct("2025-06-01 00:00:00")
-end_jun25   <- as.POSIXct("2025-06-30 23:45:00")
+start_jun25 <- as.POSIXct("2025-06-01 00:15:00")
+end_jun25   <- as.POSIXct("2025-07-01 00:00:00")
 
 ##5b. create the master sequence, 30 days, 15 min interval, should end up with 2880 observations 
 jun25_full_timestamps <- seq(from = start_jun25, to = end_jun25, by = "15 min")
@@ -50,27 +52,69 @@ jun25_full_timestamps <- seq(from = start_jun25, to = end_jun25, by = "15 min")
 ##5c. turn it into a master data frame: jun25_master_df
 jun25_master_df <- data.frame(DateTime = jun25_full_timestamps)
 
-#6. merge with data_jun25: jun25_final
+##5d. make sure they are in the same time zone 
+jun25_master_df <- jun25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_jun25 <- data_jun25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+#6. merge with data_jun25: jun25_final to obtain the full range of june
 jun25_final <- jun25_master_df %>%
   left_join(data_jun25, by = "DateTime")
 
-#6a. check the final row number, for 30 days = 2880 
+##6a. check the final row number, for 30 days = 2880 
 nrow(jun25_final)
 
-#7. locate the implicit missing values 
-jun25_missing <- jun25_final %>% 
-  filter(is.na(Out_Hum))
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+library(data.table)
+variable_to_check <- "Out_Hum" 
+
+jun25_gap_data <- jun25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+jun25_gap_fig <- ggplot(jun25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_jun25, xend = end_jun25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-06"),
+       subtitle = "red bars indicate periods with no data",
+       x = "June 2025", y = "Missing Gaps")
+
+jun25_gap_fig
 ```
+
+
 
 ## 07-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_jul25
-raw_jul25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv")
+raw_jul25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_jul25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_jul25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", skip = 2, col_names = col_names)
+raw_jul25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_jul25
 data_jul25 <- raw_jul25 %>%
@@ -81,15 +125,82 @@ data_jul25 <- raw_jul25 %>%
 data_jul25 <- data_jul25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```
 
+## 07-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of july 2025 
+start_jul25 <- as.POSIXct("2025-07-01 00:15:00")
+end_jul25   <- as.POSIXct("2025-08-01 00:00:00")
+
+##5b. create the master sequence, 31 days, 15 min interval, should end up with 2976 observations 
+jul25_full_timestamps <- seq(from = start_jul25, to = end_jul25, by = "15 min")
+
+##5c. turn it into a master data frame: jul25_master_df
+jul25_master_df <- data.frame(DateTime = jul25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+jul25_master_df <- jul25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_jul25 <- data_jul25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+#6. merge with data_jul25: jul25_final
+jul25_final <- jul25_master_df %>%
+  left_join(data_jul25, by = "DateTime")
+
+##6a. check the final row number, for 30 days = 2880 
+nrow(jul25_final)
+head(jul25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+jul25_gap_data <- jul25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+jul25_gap_fig <- ggplot(jul25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_jul25, xend = end_jul25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-07"),
+       subtitle = "red bars indicate periods with no data",
+       x = "July 2025", y = "Missing Gaps")
+
+jul25_gap_fig
+```
+
+
+
 ## 08-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_ago25
-raw_ago25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv")
+raw_ago25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_ago25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_ago25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", skip = 2, col_names = col_names)
+raw_ago25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_ago25
 data_ago25 <- raw_ago25 %>%
@@ -98,36 +209,176 @@ data_ago25 <- raw_ago25 %>%
 
 #4. ensuring timestamp is in the correct format 
 data_ago25 <- data_ago25 %>% mutate(DateTime = as.POSIXct(DateTime))
+
+head(data_ago25)
+tail(data_ago25)
+nrow(data_ago25)
 ```
+
+## 08-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of july 2025 
+start_ago25 <- as.POSIXct("2025-08-01 00:15:00")
+end_ago25   <- as.POSIXct("2025-09-01 00:00:00")
+
+##5b. create the master sequence, 31 days, 15 min interval, should end up with 2976 observations 
+ago25_full_timestamps <- seq(from = start_ago25, to = end_ago25, by = "15 min")
+
+##5c. turn it into a master data frame: jul25_master_df
+ago25_master_df <- data.frame(DateTime = ago25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+ago25_master_df <- ago25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_ago25 <- data_ago25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+#6. merge with data_jul25: jul25_final
+ago25_final <- ago25_master_df %>%
+  left_join(data_ago25, by = "DateTime")
+
+##6a. check the final row number, for 30 days = 2880 
+nrow(ago25_final)
+head(ago25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+ago25_gap_data <- ago25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+ago25_gap_fig <- ggplot(ago25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_ago25, xend = end_ago25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-08"),
+       subtitle = "red bars indicate periods with no data",
+       x = "August 2025", y = "Missing Gaps")
+
+ago25_gap_fig
+```
+
+
+
+
 
 ## 09-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_set25
-raw_set25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv")
+raw_sep25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_set25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_set25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", skip = 2, col_names = col_names)
+raw_sep25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", na = c("", "---"),skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_set25
-data_set25 <- raw_set25 %>%
+data_sep25 <- raw_sep25 %>%
   mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
   select(DateTime, everything(), -NA_Date, -NA_Time)
 
 #4. ensuring timestamp is in the correct format 
-data_set25 <- data_set25 %>% mutate(DateTime = as.POSIXct(DateTime))
+data_sep25 <- data_sep25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```
+
+## 09-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of july 2025 
+start_sep25 <- as.POSIXct("2025-09-01 00:15:00")
+end_sep25   <- as.POSIXct("2025-10-01 00:00:00")
+
+##5b. create the master sequence, 31 days, 15 min interval, should end up with 2880 observations 
+sep25_full_timestamps <- seq(from = start_sep25, to = end_sep25, by = "15 min")
+
+##5c. turn it into a master data frame: sep25_master_df
+sep25_master_df <- data.frame(DateTime = sep25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+sep25_master_df <- sep25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_sep25 <- data_sep25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+#6. merge with data_set25: sep25_final
+sep25_final <- sep25_master_df %>%
+  left_join(data_sep25, by = "DateTime")
+
+##6a. check the final row number, for 30 days = 2880 
+nrow(sep25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+sep25_gap_data <- sep25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+sep25_gap_fig <- ggplot(sep25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_sep25, xend = end_sep25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-09"),
+       subtitle = "red bars indicate periods with no data",
+       x = "September 2025", y = "Missing Gaps")
+
+sep25_gap_fig
+```
+
+
+
 
 ## 10-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_oct25
-raw_oct25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv")
+raw_oct25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_oct25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_oct25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", skip = 2, col_names = col_names)
+raw_oct25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_oct25
 data_oct25 <- raw_oct25 %>%
@@ -138,15 +389,82 @@ data_oct25 <- raw_oct25 %>%
 data_oct25 <- data_oct25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```
 
+## 10-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of oct 2025 
+start_oct25 <- as.POSIXct("2025-10-01 00:15:00")
+end_oct25   <- as.POSIXct("2025-11-01 00:00:00")
+
+##5b. create the master sequence, 31 days, 15 min interval, should end up with 2976 observations 
+oct25_full_timestamps <- seq(from = start_oct25, to = end_oct25, by = "15 min")
+
+##5c. turn it into a master data frame: oct25_master_df
+oct25_master_df <- data.frame(DateTime = oct25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+oct25_master_df <- oct25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_oct25 <- data_oct25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+#6. merge with data_oct25: oct25_final
+oct25_final <- oct25_master_df %>%
+  left_join(data_oct25, by = "DateTime")
+
+##6a. check the final row number, for 31 days = 2976 
+nrow(oct25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+oct25_gap_data <- oct25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+oct25_gap_fig <- ggplot(oct25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_oct25, xend = end_oct25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-10"),
+       subtitle = "red bars indicate periods with no data",
+       x = "October 2025", y = "Missing Gaps")
+
+oct25_gap_fig
+```
+
+
+
+
 ## 11-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_nov25
-raw_nov25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv")
+raw_nov25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_nov25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_nov25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", skip = 2, col_names = col_names)
+raw_nov25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_nov25
 data_nov25 <- raw_nov25 %>%
@@ -157,15 +475,81 @@ data_nov25 <- raw_nov25 %>%
 data_nov25 <- data_nov25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```
 
+## 11-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of nov 2025 
+start_nov25 <- as.POSIXct("2025-11-01 00:15:00")
+end_nov25   <- as.POSIXct("2025-12-01 00:00:00")
+
+##5b. create the master sequence, 30 days, 15 min interval, should end up with 2880 observations 
+nov25_full_timestamps <- seq(from = start_nov25, to = end_nov25, by = "15 min")
+
+##5c. turn it into a master data frame: nov25_master_df
+nov25_master_df <- data.frame(DateTime = nov25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+nov25_master_df <- nov25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_nov25 <- data_nov25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+head(data_nov25)
+
+#6. merge with data_nov25: nov25_final
+nov25_final <- nov25_master_df %>%
+  left_join(data_nov25, by = "DateTime")
+
+##6a. check the final row number, for 31 days = 2976 
+nrow(nov25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+nov25_gap_data <- nov25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+nov25_gap_fig <- ggplot(nov25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_nov25, xend = end_nov25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-11"),
+       subtitle = "red bars indicate periods with no data",
+       x = "November 2025", y = "Missing Gaps")
+
+nov25_gap_fig
+```
+
 ## 12-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_dec25
-raw_dec25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv")
+raw_dec25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one: raw_dec25
-hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", n_max = 2, col_names = FALSE)
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
-raw_dec25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", skip = 2, col_names = col_names)
+raw_dec25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", na = c("", "---"),skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_nov25
 data_dec25 <- raw_dec25 %>%
@@ -176,8 +560,82 @@ data_dec25 <- raw_dec25 %>%
 data_dec25 <- data_dec25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```
 
+## 12-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+```{r}
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of dec 2025 
+start_dec25 <- as.POSIXct("2025-12-01 00:15:00")
+end_dec25   <- as.POSIXct("2026-01-01 00:00:00")
 
+##5b. create the master sequence, 31 days, 15 min interval, should end up with 2976 observations 
+dec25_full_timestamps <- seq(from = start_dec25, to = end_dec25, by = "15 min")
 
+##5c. turn it into a master data frame: dec25_master_df
+dec25_master_df <- data.frame(DateTime = dec25_full_timestamps)
+
+##5d. make sure they are in the same time zone 
+dec25_master_df <- dec25_master_df %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+data_dec25 <- data_dec25 %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
+
+head(data_dec25)
+
+#6. merge with data_nov25: nov25_final
+dec25_final <- dec25_master_df %>%
+  left_join(data_dec25, by = "DateTime")
+
+##6a. check the final row number, for 31 days = 2976 
+nrow(dec25_final)
+
+#7. creating a heat map of missing values attempt 
+
+##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
+variable_to_check <- "Out_Hum" 
+
+dec25_gap_data <- dec25_final %>%
+  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
+  # Identify groups of consecutive TRUE (missing) values
+  mutate(gap_id = rleid(is_missing)) %>%
+  filter(is_missing == TRUE) %>%
+  group_by(gap_id) %>%
+  summarise(
+    start_time = min(DateTime),
+    end_time = max(DateTime),
+    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
+  )
+
+##7a. creating a ggplot of the time gaps 
+dec25_gap_fig <- ggplot(dec25_gap_data) +
+  # Draw a background line representing the whole month
+  annotate("segment", x = start_dec25, xend = end_dec25, y = 1, yend = 1, 
+           color = "grey80", size = 2) +
+  # Overlay red segments for the gaps
+  geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
+               color = "red", size = 8) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  labs(title = paste("Missing Data Intervals: 2025-12"),
+       subtitle = "red bars indicate periods with no data",
+       x = "Decemeber 2025", y = "Missing Gaps")
+
+dec25_gap_fig
+```
+# 06-2025 - Plotly Trials w/ Rain
+```{r}
+#8. trying to use plotly to see where the gaps are monthly 
+fig_jun25_rain <- plot_ly(width = 900, height = 500) %>%
+  # create plot with rain as main variable
+  add_trace(data = jun25_final, x = ~`DateTime`, y = ~`NA_Rain`, 
+            name = 'Precipitation', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8))
+
+fig_jun25_rain
+```
 
 
 
