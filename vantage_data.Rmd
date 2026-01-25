@@ -1,0 +1,159 @@
+---
+title: "vantage_data"
+author: "Valeria Aspinall"
+date: "2026-01-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(knitr)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+```
+
+##    2025 
+
+## 06-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path 
+raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv")
+
+#2. merge the two metadata rows in one
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_jun25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_jun25
+data_jun25 <- raw_jun25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_jun25 <- data_jun25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 07-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_jul25
+raw_jul25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv")
+
+#2. merge the two metadata rows in one: raw_jul25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_jul25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_jul25
+data_jul25 <- raw_jul25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_jul25 <- data_jul25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 08-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_ago25
+raw_ago25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv")
+
+#2. merge the two metadata rows in one: raw_ago25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_ago25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_ago25
+data_ago25 <- raw_ago25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_ago25 <- data_ago25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 09-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_set25
+raw_set25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv")
+
+#2. merge the two metadata rows in one: raw_set25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_set25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_set25
+data_set25 <- raw_set25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_set25 <- data_set25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 10-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_oct25
+raw_oct25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv")
+
+#2. merge the two metadata rows in one: raw_oct25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_oct25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_oct25
+data_oct25 <- raw_oct25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_oct25 <- data_oct25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 11-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_nov25
+raw_nov25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv")
+
+#2. merge the two metadata rows in one: raw_nov25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_nov25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_nov25
+data_nov25 <- raw_nov25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_nov25 <- data_nov25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+## 12-2025 Data Upload & Reorganization 
+```{r}
+#1. upload data using read.csv and the file path: raw_dec25
+raw_dec25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv")
+
+#2. merge the two metadata rows in one: raw_dec25
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", n_max = 2, col_names = FALSE)
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+raw_dec25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", skip = 2, col_names = col_names)
+
+#3. mutate the date and time stamps into one column: data_nov25
+data_dec25 <- raw_dec25 %>%
+  mutate(DateTime = dmy_hms(paste(NA_Date, NA_Time))) %>%
+  select(DateTime, everything(), -NA_Date, -NA_Time)
+
+#4. ensuring timestamp is in the correct format 
+data_dec25 <- data_dec25 %>% mutate(DateTime = as.POSIXct(DateTime))
+```
+
+
+
+
