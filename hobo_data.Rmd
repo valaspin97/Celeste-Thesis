@@ -91,3 +91,34 @@ figall_HOBO_wl <- plot_ly(width = 900, height = 500) %>%
 figall_HOBO_wl
 ```
 
+```{r}
+figall_HOBO_temp <- plot_ly(width = 900, height = 400) %>%
+  # Add HOBO#1
+  add_trace(data = hobo1_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 1', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#2
+  add_trace(data = hobo2_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 2', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#3
+  add_trace(data = hobo3_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 3', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#4
+  add_trace(data = hobo4_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 4', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#5 
+  add_trace(data = hobo5_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`,
+            name = 'HOBO Logger 5', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Labelling the graph
+  layout(title = "Water Temperature - Tapir Valley's Wetland",
+         xaxis = list(title = "Date and Time"),
+         yaxis = list(title = "Temperature (°C)"))
+```
+
+```{r}
+figall_HOBO_temp
+```
