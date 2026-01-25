@@ -24,7 +24,7 @@ library(tidyverse)
 ## 06-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path 
-raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv")
+raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"))
 
 #2. merge the two metadata rows in one
 hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", n_max = 2, col_names = FALSE)
@@ -38,6 +38,28 @@ data_jun25 <- raw_jun25 %>%
 
 #4. ensuring timestamp is in the correct format 
 data_jun25 <- data_jun25 %>% mutate(DateTime = as.POSIXct(DateTime))
+
+#5. expanding data frame to identify implicit missing values 
+##5a. starting by defining the start and end of the month of june 2025 
+start_jun25 <- as.POSIXct("2025-06-01 00:00:00")
+end_jun25   <- as.POSIXct("2025-06-30 23:45:00")
+
+##5b. create the master sequence, 30 days, 15 min interval, should end up with 2880 observations 
+jun25_full_timestamps <- seq(from = start_jun25, to = end_jun25, by = "15 min")
+
+##5c. turn it into a master data frame: jun25_master_df
+jun25_master_df <- data.frame(DateTime = jun25_full_timestamps)
+
+#6. merge with data_jun25: jun25_final
+jun25_final <- jun25_master_df %>%
+  left_join(data_jun25, by = "DateTime")
+
+#6a. check the final row number, for 30 days = 2880 
+nrow(jun25_final)
+
+#7. locate the implicit missing values 
+jun25_missing <- jun25_final %>% 
+  filter(is.na(Out_Hum))
 ```
 
 ## 07-2025 Data Upload & Reorganization 
