@@ -38,8 +38,6 @@ data_jun25 <- raw_jun25 %>%
 
 #4. ensuring timestamp is in the correct format 
 data_jun25 <- data_jun25 %>% mutate(DateTime = as.POSIXct(DateTime))
-
-##data line
 ```
 
 ## 07-2025 Data Upload & Reorganization 
