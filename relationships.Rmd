@@ -1,0 +1,149 @@
+---
+title: "relationships"
+author: "Valeria Aspinall"
+date: "2026-01-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(knitr)
+library(dplyr)
+library(lubridate)
+library(plotly)
+
+source("vantage_data.R")
+source("hobo_data.R")
+
+# here are the two files I will be working with to create the plot of daily precip and only of the hobo loggers 
+final_all_months_25
+hobo2_raw
+```
+
+```{r}
+#1. subset the NA_Rain data column into one single data frame that has the DateTime and NA_Rain
+
+#1a.
+precip_clean <- final_all_months_25 %>%
+  select(DateTime, `Rain (mm)` = NA_Rain)
+
+daily_precip
+
+#1b. repeat for water level
+waterlevel_clean <- hobo2_raw %>%
+  select(DateTime= `Date-Time (CST)`, `Water Level (m)` = `Water Level , m`)
+
+#1c. now join both cleaned data sets 
+joined_df <- full_join(precip_clean, waterlevel_clean, by = "DateTime")
+
+#2. attempt plotting everything together, with the daily precip values and the 15 minute interval water level (AI Code)
+
+# Assuming joined_df has 'DateTime', 'water_level_m', and 'precip_mm'
+plotting_data <- joined_df %>%
+  # Create a date-only column for grouping
+  mutate(Date = as.Date(DateTime)) %>%
+  # Calculate total precip per day
+  group_by(Date) %>%
+  mutate(`Daily Precip (mm)` = sum(`Rain (mm)`, na.rm = TRUE)) %>%
+  ungroup() #flattens the data, allows for each row to be treated independently 
+
+plotting_data
+
+#2. using the plotly code from AI 
+
+#2a. Define the secondary axis for Precipitation 
+ay <- list(
+  tickfont = list(color = "rgb(158,202,225)") ,
+  overlaying = "y",
+  side = "right",
+  title = list(
+    text = "Daily Precipitation (mm)", 
+    font = list(color = "rgb(158,202,225)"), 
+    standoff = 10),
+  automargin = TRUE,
+  range = c(0, max(plotting_data$`Daily Precip (mm)`, na.rm = TRUE) * 1.2)
+)
+
+fig25_wl_dailyp <- plot_ly(plotting_data, width = 900, height = 500) %>%
+    # 1. Daily Precipitation - Secondary Y-Axis (Right)
+  # We use 'type = bar' but Plotly will stack them; 
+  # to show it as a 'daily block', we use the Daily_Precip value
+  add_bars(x = ~DateTime, y = ~plotting_data$`Daily Precip (mm)`, 
+           yaxis = "y2", 
+           name = "Daily Precipitation (mm)", 
+           marker = list(color = "rgb(158,202,225)")) %>%
+  # 2. Water Level (15-min) - Primary Y-Axis (Left)
+  add_lines(x = ~DateTime, y = plotting_data$`Water Level (m)`, 
+            name = "Water Level (15-min)",
+            line = list(color = "purple", width = 1)) %>%
+  layout(
+    title = "Water Level (15-min) vs Daily Precipitation",
+    xaxis = list(title = "06-2025 to 12-2025 Monthly Data"),
+    yaxis = list(title = "Water Level (m)", titlefont = list(color = "purple")),
+    yaxis2 = ay,
+    barmode = "relative",
+    hovermode = "x unified", 
+    legend = list(orientation = "h", x= 0 , y = -0.2)
+  )
+
+fig25_wl_dailyp
+```
+```{r}
+#swapping the axis so that the purple line is on top 
+
+# 1. Update the axis list to be the PRIMARY axis (left side)
+# We will use this for Daily Precipitation now
+ax_precip <- list(
+  tickfont = list(color = "rgb(158,202,225)"),
+  side = "left", # Move to left
+  title = list(
+    text = "Daily Precipitation (mm)", 
+    font = list(color = "rgb(158,202,225)"), 
+    standoff = 20
+  ),
+  automargin = TRUE,
+  range = c(0, max(plotting_data$`Daily Precip (mm)`, na.rm = TRUE) * 1.2)
+)
+
+# 2. Update the secondary axis (right side) for Water Level
+ax_water <- list(
+  tickfont = list(color = "rgb(8,48,107)"),
+  overlaying = "y",
+  side = "right", # Move to right
+  title = list(
+    text = "Water Level (m)",
+    font = list(color = "rgb(8,48,107)"),
+    standoff = 20
+  ),
+  automargin = TRUE
+)
+
+fig25_wl_dailyp <- plot_ly(plotting_data, width = 900, height = 500) %>%
+  # ADD BARS FIRST (on primary y-axis)
+  add_bars(x = ~DateTime, y = ~`Daily Precip (mm)`, 
+           name = "Daily Precipitation (mm)", 
+           marker = list(color = "rgb(158,202,225)")) %>%
+           
+  # ADD LINE SECOND (on secondary y-axis)
+  # Putting the line on y2 often forces it to the foreground
+  add_lines(x = ~DateTime, y = ~`Water Level (m)`, 
+            yaxis = "y2", 
+            name = "Water Level (15-min)",
+            line = list(color = "rgb(8,48,107)", width = 1)) %>%
+            
+  layout(
+    title = "Water Level (15-min) vs Daily Precipitation",
+    xaxis = list(title = "06-2025 to 12-2025 Monthly Data", standoff = 5, automargin = TRUE),
+    yaxis = ax_precip,
+    yaxis2 = ax_water,
+    barmode = "relative",
+    hovermode = "x unified", 
+    legend = list(orientation = "h", x = 0.5, xanchor = "center", y = -0.15),
+    margin = list(b = 100, r = 80)
+  )
+
+fig25_wl_dailyp
+```
