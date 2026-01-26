@@ -620,10 +620,6 @@ dec25_gap_fig <- ggplot(dec25_gap_data) +
 dec25_gap_fig
 ```
 
-
-
-
-
 # Merging 2025 Data together 
 ```{r}
 full_2025_data <- bind_rows(jun25_final,jul25_final,ago25_final,sep25_final,oct25_final,nov25_final,dec25_final)
@@ -632,14 +628,35 @@ full_2025_data <- full_2025_data %>%
   arrange(DateTime)
 
 nrow(full_2025_data)
+
+## I realized that some of the column headers were different, will fix as follows: 
+
+#1a. create a list of all of your months 
+all_months_25 <- list(jun25_final, jul25_final, ago25_final, sep25_final, oct25_final, nov25_final, dec25_final)
+
+#1b. now fix the Out_Temp column, some where labelled as Temp_Out
+
+fix_outtemp_column_name <- function(df) {
+  df %>%
+    rename_with(
+      .fn = ~ str_replace(., "Temp_Out", "Out_Temp"),
+      .cols = matches("Temp_Out|Out_Temp") # targets only relevant columns
+    )
+}
+
+#1c. apply this to all lists and then bind the rows together again! USE THIS AS THE FINAL MERGED 2025 DATA 
+corrected_all_months_25 <- lapply(all_months_25, fix_outtemp_column_name)
+
+final_all_months_25 <- bind_rows(corrected_all_months_25)
 ```
 
-# 06-2025 - Plotly Trials w/ Rain
+## Plotly Trials using Precipitation as the Variable
 ```{r}
 #1. trying plotly on the range of june-2025 to decemeber-2025 with precipitation 
 
 fig_2025_rain <- plot_ly(width = 900, height = 500) %>%
-  add_trace(data = full_2025_data, x = ~`DateTime`, y = ~ `NA_Rain`,
+  add_trace(data = final_all_months_25
+            , x = ~`DateTime`, y = ~ `NA_Rain`,
             name = '2025 Precipitation', type = 'scatter', mode = 'lines',
             line = list(width = 0.8))
 fig_2025_rain
@@ -647,7 +664,7 @@ fig_2025_rain
 #2. now trying plotly but with daily sum of precipitation 
 
 ##2a. first, obtain the daily precipitation values with the following code
-daily_precip <- full_2025_data %>%
+daily_precip <- final_all_months_25 %>%
   # create a 'date' column that ignores the 15-min time
   mutate(Date = as.Date(DateTime)) %>%
   # group by that date
@@ -664,6 +681,26 @@ fig25_daily_precip <- plot_ly(width = 900, height = 500) %>%
             line = list(width = 0.8))
 
 fig25_daily_precip
+
+#2c. now, attempt using plotly again but plotting it as a bar graph 
+
+fig25_precip_bar <- plot_ly(width = 900, height = 500) %>%
+  add_trace(data = daily_precip, x = ~`Date`, y = ~ `Daily_Precip`,
+            name = '2025 Precipitation', type = 'bar', marker = list(color = 'rgb(158,202,225)',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 1)))
+
+fig25_precip_bar <- fig25_precip_bar %>% layout(title = "Daily Precipitation at Tapir Valley Nature Reserve",
+         xaxis = list(title = "Date - Monthly 2025"),
+         yaxis = list(title = "Daily Precipitation (mm)"))
+
+fig25_precip_bar
+```
+
+```{r}
+# turning this rmd file into an r script
+
+knitr::purl("vantage_data.Rmd", documentation = 2)
 ```
 
 

@@ -122,3 +122,9 @@ figall_HOBO_temp <- plot_ly(width = 900, height = 400) %>%
 ```{r}
 figall_HOBO_temp
 ```
+
+```{r}
+# turning this rmd file into an r script
+
+knitr::purl("hobo_data.Rmd", documentation = 2)
+```
