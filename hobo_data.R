@@ -1,0 +1,124 @@
+#' ---
+#' title: "Celeste Thesis - HOBO Data"
+#' author: "Valeria Aspinall"
+#' date: "2026-01-25"
+#' output: html_document
+#' ---
+#' 
+## ----setup, include=FALSE------------------------------------------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+
+#' 
+## ------------------------------------------------------------------------------------------------------------------
+# packages
+library(plotly)
+library(ggplot2)
+library(knitr)
+library(readxl)
+
+#' 
+#' ## HOBO MX20L - Placement Map Image
+## ----echo=FALSE, fig.algin='left', out.width='90%'-----------------------------------------------------------------
+knitr::include_graphics("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/HOBO_Map.png")
+
+#' 
+#' ## HOBO MX20L - Upload Code .xlsx 
+## ----echo = TRUE---------------------------------------------------------------------------------------------------
+#HOBO 1 - 22304971 | Area Amplexo | Date Installed: 2025-06-14 | Data Range: 2025-07-19 16:30:00 to 2026-01-03 11:00:00
+
+hobo1_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/22304971 2026-01-03 12_04_16 EST (Data CST).xlsx")
+hobo1_clean <- na.omit(hobo1_raw) #remove the NA rows, no water level values due to compensation overlap 
+
+#HOBO 2 - 22339438 | Espejo de Agua | Date Installed: 2025-07-15 | Data Range: 2025-07-19 16:45:00 to 2026-01-03 10:30:00
+
+hobo2_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/22339438 2026-01-03 11_39_58 EST (Data CST).xlsx")
+hobo2_clean <- na.omit(hobo2_raw) #remove the NA rows, no water level values due to compensation overlap 
+
+#HOBO 3 - 22339387 | Plataforma 2 | Date Installed: 2025-07-03 | Data Range: 2025-07-19 17:00:00 to 2026-01-03 10:00:00
+
+hobo3_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/22339387 2026-01-03 11_06_50 EST (Data CST).xlsx")
+hobo3_clean <- na.omit(hobo3_raw) #remove the NA rows, no water level values due to compensation overlap 
+
+#HOBO 4 - 22339440 | Panal Avispas | Date Installed: 2025-07-15 | Data Range: 2025-07-19 16:45:00 to 2026-01-03 10:30:00
+
+hobo4_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/22339440 2026-01-03 10_40_54 EST (Data CST).xlsx")
+hobo4_clean <- na.omit(hobo4_raw) #remove the NA rows, no water level values due to compensation overlap 
+
+#HOBO 5 - 22339439 | Canal Profundo | Date Installed: 2025-07-31 | Data Range: 2025-07-31 12:00:00 to 2025-10-23 11:15:00
+
+hobo5_raw <- read_xlsx("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/hobo_data/22339439 2025-10-23 13_19_35 EDT (Data CST).xlsx")
+hobo5_clean <- na.omit(hobo5_raw) #remove the NA rows, no water level values due to compensation overlap 
+
+#' 
+#' ## HOBO MX20L - Plotly Water Level Data (m)
+## ------------------------------------------------------------------------------------------------------------------
+figall_HOBO_wl <- plot_ly(width = 900, height = 500) %>%
+  # Add HOBO#1
+  add_trace(data = hobo1_clean, x = ~`Date-Time (CST)`, y = ~`Water Level , m`, 
+            name = 'HOBO Logger 1', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8)) %>%
+  # Add HOBO#2
+  add_trace(data = hobo2_clean, x = ~`Date-Time (CST)`, y = ~`Water Level , m`,
+            name = 'HOBO Logger 2', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8)) %>%
+  # Add HOBO#3
+  add_trace(data = hobo3_clean, x = ~`Date-Time (CST)`, y = ~`Water Level , m`, 
+            name = 'HOBO Logger 3', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8)) %>%
+  # Add HOBO#4
+  add_trace(data = hobo4_clean, x = ~`Date-Time (CST)`, y = ~`Water Level , m`, 
+            name = 'HOBO Logger 4', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8)) %>%
+  # Add HOBO#5
+  add_trace(data = hobo5_clean, x = ~`Date-Time (CST)`, y = ~`Water Level , m`,
+            name = 'HOBO Logger 5', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8)) %>%
+  # Labelling the graph 
+  layout(title = list(
+    text = "Water Level Data - Tapir Valley's Wetland",
+    y = 2),
+         xaxis = list(title = "Date and Time"),
+         yaxis = list(title = "Water Level (m)"), 
+    margin = list(b= 150),
+    annotations = list(x = 'center', y = -0.3, 
+                            text = "Figure 1: Combined HOBO MX20L Water Level Data from Tapir Valleys' Wetland",
+                       showarrow = F, xref='paper', yref='paper', 
+                            xanchor='center', yanchor='center',
+                            font = list(size = 12)))
+
+#' 
+## ------------------------------------------------------------------------------------------------------------------
+figall_HOBO_wl
+
+#' 
+## ------------------------------------------------------------------------------------------------------------------
+figall_HOBO_temp <- plot_ly(width = 900, height = 400) %>%
+  # Add HOBO#1
+  add_trace(data = hobo1_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 1', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#2
+  add_trace(data = hobo2_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 2', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#3
+  add_trace(data = hobo3_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 3', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#4
+  add_trace(data = hobo4_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`, 
+            name = 'HOBO Logger 4', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Add HOBO#5 
+  add_trace(data = hobo5_clean, x = ~`Date-Time (CST)`, y = ~`Temperature , °C`,
+            name = 'HOBO Logger 5', type = 'scatter', mode = 'lines',
+            line = list(width = 0.2)) %>%
+  # Labelling the graph
+  layout(title = "Water Temperature - Tapir Valley's Wetland",
+         xaxis = list(title = "Date and Time"),
+         yaxis = list(title = "Temperature (°C)"))
+
+#' 
+## ------------------------------------------------------------------------------------------------------------------
+figall_HOBO_temp
+
