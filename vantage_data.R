@@ -19,10 +19,11 @@ library(ggplot2)
 library(plotly)
 library(tidyverse)
 library(data.table)
+library(stringr)
 
-#' 
-#' ## 06-2025 Data Upload & Reorganization 
-## ------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------
+### 06-2025 Data Upload & Reorganization 
+# ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path 
 raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"))
 
@@ -39,11 +40,11 @@ data_jun25 <- raw_jun25 %>%
 #4. ensuring timestamp is in the correct format 
 data_jun25 <- data_jun25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 06-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
-## ------------------------------------------------------------------------------------------------------------------
+### 06-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+# ---------------------------------------------------------------
+
 #5. expanding data frame to identify implicit missing values 
-##5a. starting by defining the start and end of the month of june 2025 
+#5a.starting by defining the start and end of the month of june 2025 
 start_jun25 <- as.POSIXct("2025-06-01 00:15:00")
 end_jun25   <- as.POSIXct("2025-07-01 00:00:00")
 
@@ -103,9 +104,9 @@ jun25_gap_fig <- ggplot(jun25_gap_data) +
 
 jun25_gap_fig
 
-#' 
-#' 
-#' ## 07-2025 Data Upload & Reorganization 
+
+## ------------------------------------------------------------------------------------------------------------------
+### 07-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_jul25
 raw_jul25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", na = c("", "---"))
@@ -123,9 +124,9 @@ data_jul25 <- raw_jul25 %>%
 #4. ensuring timestamp is in the correct format 
 data_jul25 <- data_jul25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 07-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
-## ------------------------------------------------------------------------------------------------------------------
+ 
+### 07-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+## --------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of july 2025 
 start_jul25 <- as.POSIXct("2025-07-01 00:15:00")
@@ -188,9 +189,9 @@ jul25_gap_fig <- ggplot(jul25_gap_data) +
 
 jul25_gap_fig
 
-#' 
-#' 
-#' ## 08-2025 Data Upload & Reorganization 
+
+## ------------------------------------------------------------------------------------------------------------------
+### 08-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_ago25
 raw_ago25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", na = c("", "---"))
@@ -212,9 +213,8 @@ head(data_ago25)
 tail(data_ago25)
 nrow(data_ago25)
 
-#' 
-#' ## 08-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
-## ------------------------------------------------------------------------------------------------------------------
+### 08-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+## --------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of august 2025 
 start_ago25 <- as.POSIXct("2025-08-01 00:15:00")
@@ -277,9 +277,8 @@ ago25_gap_fig <- ggplot(ago25_gap_data) +
 
 ago25_gap_fig
 
-#' 
-#' 
-#' ## 09-2025 Data Upload & Reorganization 
+## ------------------------------------------------------------------------------------------------------------------
+### 09-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_set25
 raw_sep25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", na = c("", "---"))
@@ -297,9 +296,8 @@ data_sep25 <- raw_sep25 %>%
 #4. ensuring timestamp is in the correct format 
 data_sep25 <- data_sep25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 09-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
-## ------------------------------------------------------------------------------------------------------------------
+### 09-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
+## --------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of september 2025 
 start_sep25 <- as.POSIXct("2025-09-01 00:15:00")
@@ -361,9 +359,9 @@ sep25_gap_fig <- ggplot(sep25_gap_data) +
 
 sep25_gap_fig
 
-#' 
-#' 
-#' ## 10-2025 Data Upload & Reorganization 
+
+## ------------------------------------------------------------------------------------------------------------------
+### 10-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_oct25
 raw_oct25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", na = c("", "---"))
@@ -381,9 +379,8 @@ data_oct25 <- raw_oct25 %>%
 #4. ensuring timestamp is in the correct format 
 data_oct25 <- data_oct25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 10-2025 Identifying Gaps (Implicit & Explicit Missing Values)
-## ------------------------------------------------------------------------------------------------------------------
+### 10-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+## --------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of oct 2025 
 start_oct25 <- as.POSIXct("2025-10-01 00:15:00")
@@ -445,9 +442,9 @@ oct25_gap_fig <- ggplot(oct25_gap_data) +
 
 oct25_gap_fig
 
-#' 
-#' 
-#' ## 11-2025 Data Upload & Reorganization 
+
+## ------------------------------------------------------------------------------------------------------------------
+### 11-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_nov25
 raw_nov25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", na = c("", "---"))
@@ -465,9 +462,8 @@ data_nov25 <- raw_nov25 %>%
 #4. ensuring timestamp is in the correct format 
 data_nov25 <- data_nov25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 11-2025 Identifying Gaps (Implicit & Explicit Missing Values)
-## ------------------------------------------------------------------------------------------------------------------
+### 11-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+## --------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of nov 2025 
 start_nov25 <- as.POSIXct("2025-11-01 00:15:00", tz = "America/Costa_Rica")
@@ -533,9 +529,9 @@ nov25_gap_fig <- ggplot(nov25_gap_data) +
 
 nov25_gap_fig
 
-#' 
-#' 
-#' ## 12-2025 Data Upload & Reorganization 
+
+## ------------------------------------------------------------------------------------------------------------------
+### 12-2025 Data Upload & Reorganization 
 ## ------------------------------------------------------------------------------------------------------------------
 #1. upload data using read.csv and the file path: raw_dec25
 raw_dec25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", na = c("", "---"))
@@ -553,9 +549,8 @@ data_dec25 <- raw_dec25 %>%
 #4. ensuring timestamp is in the correct format 
 data_dec25 <- data_dec25 %>% mutate(DateTime = as.POSIXct(DateTime))
 
-#' 
-#' ## 12-2025 Identifying Gaps (Implicit & Explicit Missing Values)
-## ------------------------------------------------------------------------------------------------------------------
+### 12-2025 Identifying Gaps (Implicit & Explicit Missing Values)
+## ----------------------------------------------------------------
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of dec 2025 
 start_dec25 <- as.POSIXct("2025-12-01 00:15:00")
@@ -619,12 +614,9 @@ dec25_gap_fig <- ggplot(dec25_gap_data) +
 
 dec25_gap_fig
 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' # Merging 2025 Data together 
+
+## ------------------------------------------------------------------------------------------------------------------
+### Merging 2025 Data together 
 ## ------------------------------------------------------------------------------------------------------------------
 full_2025_data <- bind_rows(jun25_final,jul25_final,ago25_final,sep25_final,oct25_final,nov25_final,dec25_final)
 
@@ -633,13 +625,33 @@ full_2025_data <- full_2025_data %>%
 
 nrow(full_2025_data)
 
-#' 
+## I realized that some of the column headers were different, will fix as follows: 
+
+#1a. create a list of all of your months 
+all_months_25 <- list(jun25_final, jul25_final, ago25_final, sep25_final, oct25_final, nov25_final, dec25_final)
+
+#1b. now fix the Out_Temp column, some where labelled as Temp_Out
+
+fix_outtemp_column_name <- function(df) {
+  df %>%
+    rename_with(
+      .fn = ~ str_replace(., "Temp_Out", "Out_Temp"),
+      .cols = matches("Temp_Out|Out_Temp") # targets only relevant columns
+    )
+}
+
+#1c. apply this to all lists and then bind the rows together again! USE THIS AS THE FINAL MERGED 2025 DATA 
+corrected_all_months_25 <- lapply(all_months_25, fix_outtemp_column_name)
+
+final_all_months_25 <- bind_rows(corrected_all_months_25)
+
+
 #' # 06-2025 - Plotly Trials w/ Rain
 ## ------------------------------------------------------------------------------------------------------------------
 #1. trying plotly on the range of june-2025 to decemeber-2025 with precipitation 
 
 fig_2025_rain <- plot_ly(width = 900, height = 500) %>%
-  add_trace(data = full_2025_data, x = ~`DateTime`, y = ~ `NA_Rain`,
+  add_trace(data = final_all_months_25, x = ~`DateTime`, y = ~ `NA_Rain`,
             name = '2025 Precipitation', type = 'scatter', mode = 'lines',
             line = list(width = 0.8))
 fig_2025_rain
@@ -647,7 +659,7 @@ fig_2025_rain
 #2. now trying plotly but with daily sum of precipitation 
 
 ##2a. first, obtain the daily precipitation values with the following code
-daily_precip <- full_2025_data %>%
+daily_precip <- final_all_months_25 %>%
   # create a 'date' column that ignores the 15-min time
   mutate(Date = as.Date(DateTime)) %>%
   # group by that date
@@ -665,8 +677,17 @@ fig25_daily_precip <- plot_ly(width = 900, height = 500) %>%
 
 fig25_daily_precip
 
-#' 
-#' 
-#' 
-#' 
-#' 
+##2c. now, attempt using plotly again but this time using a bar graph
+
+fig25_precip_bar <- plot_ly(width = 900, height = 500) %>%
+  add_trace(data = daily_precip, x = ~`Date`, y = ~ `Daily_Precip`,
+            name = '2025 Precipitation', type = 'bar', marker = list(color = 'rgb(158,202,225)',
+                                                                     line = list(color = 'rgb(8,48,107)',
+                                                                                 width = 1)))
+
+fig25_precip_bar <- fig25_precip_bar %>% layout(title = "Daily Precipitation at Tapir Valley Nature Reserve",
+                                                xaxis = list(title = "Date - Monthly 2025"),
+                                                yaxis = list(title = "Daily Precipitation (mm)"))
+
+fig25_precip_bar
+
