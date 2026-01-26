@@ -1,10 +1,14 @@
 # Celeste-Thesis
 
-"HOBO Data html .Rmd link:" 
+## **HOBO Logger Data**
 
-"file:///Users/valeriaaspinall/Desktop/UGA%20Thesis%20Project%20/R%20Work%20-%20Thesis/Celeste%20Thesis/hobo_data.html"
+## Rmd file below includes the code for data upload, and the code to graph water level and temperature with plotly
 
-"Vantage Data.Rmd - Tapir Valley Vantage Pro 2 Weather Station Data - Data Upload, Reorganization and Identifying Gaps - link:"
+file:///Users/valeriaaspinall/Desktop/UGA%20Thesis%20Project%20/R%20Work%20-%20Thesis/Celeste%20Thesis/hobo_data.html
 
-"file:///Users/valeriaaspinall/Desktop/UGA%20Thesis%20Project%20/R%20Work%20-%20Thesis/Celeste%20Thesis/vantage_data.html"
+## **Vantage Pro 2 Data** 
+
+## Rmd file below includes the code for data upload, data reorganization and code for visualizing gaps in the time series (explicit and implicit missing values)
+
+file:///Users/valeriaaspinall/Desktop/UGA%20Thesis%20Project%20/R%20Work%20-%20Thesis/Celeste%20Thesis/vantage_data.html
 
