@@ -105,7 +105,6 @@ jun25_gap_fig
 ```
 
 
-
 ## 07-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_jul25
@@ -189,7 +188,6 @@ jul25_gap_fig <- ggplot(jul25_gap_data) +
 
 jul25_gap_fig
 ```
-
 
 
 ## 08-2025 Data Upload & Reorganization 
@@ -281,9 +279,6 @@ ago25_gap_fig
 ```
 
 
-
-
-
 ## 09-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_set25
@@ -368,8 +363,6 @@ sep25_gap_fig
 ```
 
 
-
-
 ## 10-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_oct25
@@ -452,8 +445,6 @@ oct25_gap_fig <- ggplot(oct25_gap_data) +
 
 oct25_gap_fig
 ```
-
-
 
 
 ## 11-2025 Data Upload & Reorganization 
@@ -541,6 +532,7 @@ nov25_gap_fig <- ggplot(nov25_gap_data) +
 nov25_gap_fig
 ```
 
+
 ## 12-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path: raw_dec25
@@ -625,6 +617,9 @@ dec25_gap_fig <- ggplot(dec25_gap_data) +
 
 dec25_gap_fig
 ```
+
+
+
 # 06-2025 - Plotly Trials w/ Rain
 ```{r}
 #8. trying to use plotly to see where the gaps are monthly 
