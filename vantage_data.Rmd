@@ -18,6 +18,7 @@ library(lubridate)
 library(ggplot2)
 library(plotly)
 library(tidyverse)
+library(data.table)
 ```
 
 ## 06-2025 Data Upload & Reorganization 
@@ -69,7 +70,6 @@ nrow(jun25_final)
 #7. creating a heat map of missing values attempt 
 
 ##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
-library(data.table)
 variable_to_check <- "Out_Hum" 
 
 jun25_gap_data <- jun25_final %>%
@@ -216,14 +216,14 @@ nrow(data_ago25)
 ## 08-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
 ```{r}
 #5. expanding data frame to identify implicit missing values 
-##5a. starting by defining the start and end of the month of july 2025 
+##5a. starting by defining the start and end of the month of august 2025 
 start_ago25 <- as.POSIXct("2025-08-01 00:15:00")
 end_ago25   <- as.POSIXct("2025-09-01 00:00:00")
 
 ##5b. create the master sequence, 31 days, 15 min interval, should end up with 2976 observations 
 ago25_full_timestamps <- seq(from = start_ago25, to = end_ago25, by = "15 min")
 
-##5c. turn it into a master data frame: jul25_master_df
+##5c. turn it into a master data frame: ago25_master_df
 ago25_master_df <- data.frame(DateTime = ago25_full_timestamps)
 
 ##5d. make sure they are in the same time zone 
@@ -233,11 +233,11 @@ ago25_master_df <- ago25_master_df %>%
 data_ago25 <- data_ago25 %>%
   mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
 
-#6. merge with data_jul25: jul25_final
+#6. merge with data_ago25: ago25_final
 ago25_final <- ago25_master_df %>%
   left_join(data_ago25, by = "DateTime")
 
-##6a. check the final row number, for 30 days = 2880 
+##6a. check the final row number 
 nrow(ago25_final)
 head(ago25_final)
 
@@ -301,11 +301,11 @@ data_sep25 <- data_sep25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ## 09-2025 Identifying Gaps (Implicit & Explicit Missing Values) 
 ```{r}
 #5. expanding data frame to identify implicit missing values 
-##5a. starting by defining the start and end of the month of july 2025 
+##5a. starting by defining the start and end of the month of september 2025 
 start_sep25 <- as.POSIXct("2025-09-01 00:15:00")
 end_sep25   <- as.POSIXct("2025-10-01 00:00:00")
 
-##5b. create the master sequence, 31 days, 15 min interval, should end up with 2880 observations 
+##5b. create the master sequence, 30 days, 15 min interval, should end up with 2880 observations 
 sep25_full_timestamps <- seq(from = start_sep25, to = end_sep25, by = "15 min")
 
 ##5c. turn it into a master data frame: sep25_master_df
@@ -318,7 +318,7 @@ sep25_master_df <- sep25_master_df %>%
 data_sep25 <- data_sep25 %>%
   mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
 
-#6. merge with data_set25: sep25_final
+#6. merge with data_sep25: sep25_final
 sep25_final <- sep25_master_df %>%
   left_join(data_sep25, by = "DateTime")
 
@@ -470,14 +470,15 @@ data_nov25 <- data_nov25 %>% mutate(DateTime = as.POSIXct(DateTime))
 ```{r}
 #5. expanding data frame to identify implicit missing values 
 ##5a. starting by defining the start and end of the month of nov 2025 
-start_nov25 <- as.POSIXct("2025-11-01 00:15:00")
-end_nov25   <- as.POSIXct("2025-12-01 00:00:00")
+start_nov25 <- as.POSIXct("2025-11-01 00:15:00", tz = "America/Costa_Rica")
+end_nov25   <- as.POSIXct("2025-12-01 00:00:00", tz = "America/Costa_Rica")
 
 ##5b. create the master sequence, 30 days, 15 min interval, should end up with 2880 observations 
 nov25_full_timestamps <- seq(from = start_nov25, to = end_nov25, by = "15 min")
 
 ##5c. turn it into a master data frame: nov25_master_df
 nov25_master_df <- data.frame(DateTime = nov25_full_timestamps)
+nrow(nov25_master_df)
 
 ##5d. make sure they are in the same time zone 
 nov25_master_df <- nov25_master_df %>%
@@ -486,6 +487,7 @@ nov25_master_df <- nov25_master_df %>%
 data_nov25 <- data_nov25 %>%
   mutate(DateTime = force_tz(DateTime, tzone = "America/Costa_Rica"))
 
+nrow(data_nov25)
 head(data_nov25)
 
 #6. merge with data_nov25: nov25_final
@@ -620,16 +622,48 @@ dec25_gap_fig
 
 
 
+
+
+# Merging 2025 Data together 
+```{r}
+full_2025_data <- bind_rows(jun25_final,jul25_final,ago25_final,sep25_final,oct25_final,nov25_final,dec25_final)
+
+full_2025_data <- full_2025_data %>%
+  arrange(DateTime)
+
+nrow(full_2025_data)
+```
+
 # 06-2025 - Plotly Trials w/ Rain
 ```{r}
-#8. trying to use plotly to see where the gaps are monthly 
-fig_jun25_rain <- plot_ly(width = 900, height = 500) %>%
-  # create plot with rain as main variable
-  add_trace(data = jun25_final, x = ~`DateTime`, y = ~`NA_Rain`, 
-            name = 'Precipitation', type = 'scatter', mode = 'lines',
+#1. trying plotly on the range of june-2025 to decemeber-2025 with precipitation 
+
+fig_2025_rain <- plot_ly(width = 900, height = 500) %>%
+  add_trace(data = full_2025_data, x = ~`DateTime`, y = ~ `NA_Rain`,
+            name = '2025 Precipitation', type = 'scatter', mode = 'lines',
+            line = list(width = 0.8))
+fig_2025_rain
+
+#2. now trying plotly but with daily sum of precipitation 
+
+##2a. first, obtain the daily precipitation values with the following code
+daily_precip <- full_2025_data %>%
+  # create a 'date' column that ignores the 15-min time
+  mutate(Date = as.Date(DateTime)) %>%
+  # group by that date
+  group_by(Date) %>%
+  # calculate the sum precipitation for each day
+  # Use na.rm = TRUE to ignore missing values in the average
+  summarise(Daily_Precip = sum(NA_Rain, na.rm = TRUE))
+
+##2b. now, attempt using the plotly again 
+
+fig25_daily_precip <- plot_ly(width = 900, height = 500) %>%
+  add_trace(data = daily_precip, x = ~`Date`, y = ~ `Daily_Precip`,
+            name = '2025 Precipitation', type = 'scatter', mode = 'lines', fill = 'tozeroy',
             line = list(width = 0.8))
 
-fig_jun25_rain
+fig25_daily_precip
 ```
 
 
