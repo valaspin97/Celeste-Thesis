@@ -9,8 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Packages ---------------------------------------------------------------------
+
 ```{r include=FALSE}
+#### Packages ------------------------------------------------------------------
 library(knitr)
 library(dplyr)
 library(lubridate)
@@ -18,8 +19,8 @@ library(plotly)
 
 ```
 
-### Data -------------------------------------------------------------------------
 ```{r include=FALSE}
+#### Data ----------------------------------------------------------------------
 source("vantage_data.R")
 source("hobo_data.R")
 
@@ -28,7 +29,7 @@ final_all_months_25
 hobo2_raw
 ```
 
-### Precipitation & Water Level Clean Up  ----------------------------------------
+### Precipitation & Water Level Data Clean Up
 ```{r}
 #1a. subset the NA_Rain data column into one single data frame that has the DateTime and NA_Rain: precip_clean
 precip_clean <- final_all_months_25 %>%
@@ -51,7 +52,7 @@ daily_precip <- final_all_months_25 %>%
   summarise(Daily_Precip = sum(NA_Rain, na.rm = TRUE))
 ```
 
-### Preparing the plotting data ------------------------------------------------
+### Preparing Plotting Data 
 ```{r}
 #2. attempt plotting everything together, with the daily precip values and the 15 minute interval water level
 #2a. create a plotting_data data frame, that adds 'Date' and 'Daily Precip' with the mutate function that sums up the daily precipitation values, and uses na.rm = TRUE to ignore the missing values 
@@ -71,7 +72,7 @@ plotting_data
     #2. what exactly does the ungroup function do behind the scences? 
 ```
 
-### Plottling Daily Precipitation & Water Level Data from HOBO #2 
+### Plottling Daily Precipitation & Water Level Data (HOBO#2) 
 ```{r}
 #3. using the plotly package and AI help to create the code, plot Daily Precip and Water Level. This graph entails using two different y axis, one for each variable  
 library(plotly)
@@ -107,7 +108,7 @@ y2_level <- list(
 
 #3c. actually plotting the graph with the axis created above: fig25_wlp (water level dailyprecipitation)
 
-fig25_wldp <- plot_ly(plotting_data) %>% #using the plotting_data created above
+fig25_wldp <- plot_ly(plotting_data, width = 900, height = 500) %>% #using the plotting_data created above
   add_bars(x = ~DateTime, y = ~`Daily Precip (mm)`, #add bars first as the primary axis
            name = "Daily Precipitation (mm)",
            marker = list(color = "rgb(158,202,225)")) %>%
@@ -133,5 +134,3 @@ fig25_wldp <- plot_ly(plotting_data) %>% #using the plotting_data created above
 
 fig25_wldp
 ```
-
-
