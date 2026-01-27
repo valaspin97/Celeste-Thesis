@@ -1,0 +1,136 @@
+#' ---
+#' title: "Plotting HOBO & Vantage Data"
+#' author: "Valeria Aspinall"
+#' date: "2026-01-26"
+#' output: html_document
+#' ---
+#' 
+## ----setup, include=FALSE------------------------------------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+
+#' 
+#' 
+## ----include=FALSE-------------------------------------------------------------------------------------------
+#### Packages ------------------------------------------------------------------
+library(knitr)
+library(dplyr)
+library(lubridate)
+library(plotly)
+
+
+#' 
+## ----include=FALSE-------------------------------------------------------------------------------------------
+#### Data ----------------------------------------------------------------------
+source("vantage_data.R")
+source("hobo_data.R")
+
+### here are the two files I will be working with to create the plot of daily precip and only of the hobo loggers 
+final_all_months_25
+hobo2_raw
+
+#' 
+#' ### Precipitation & Water Level Data Clean Up
+## ------------------------------------------------------------------------------------------------------------
+#1a. subset the NA_Rain data column into one single data frame that has the DateTime and NA_Rain: precip_clean
+precip_clean <- final_all_months_25 %>%
+  select(DateTime, `Rain (mm)` = NA_Rain)
+
+#1b. repeat for water level, data frame called waterlevel_clean 
+waterlevel_clean <- hobo2_raw %>%
+  select(DateTime= `Date-Time (CST)`, `Water Level (m)` = `Water Level , m`)
+
+#1c. now join both cleaned data sets into one single data frame called joined_df 
+joined_df <- full_join(precip_clean, waterlevel_clean, by = "DateTime")
+
+#1d. estimate daily precipitation with the following code (also used in vantage_data file), this can be used to see the daily precip individually, it is not used in the code below for plotting. 
+daily_precip <- final_all_months_25 %>%
+  # with mutate create a Date column that ignores the 15-min time, only Date
+  mutate(Date = as.Date(DateTime)) %>%
+  # group by that date
+  group_by(Date) %>%
+  # calculate the sum precipitation for each day, using na.rm = TRUE to ignore missing values in the average
+  summarise(Daily_Precip = sum(NA_Rain, na.rm = TRUE))
+
+#' 
+#' ### Preparing Plotting Data 
+## ------------------------------------------------------------------------------------------------------------
+#2. attempt plotting everything together, with the daily precip values and the 15 minute interval water level
+#2a. create a plotting_data data frame, that adds 'Date' and 'Daily Precip' with the mutate function that sums up the daily precipitation values, and uses na.rm = TRUE to ignore the missing values 
+
+plotting_data <- joined_df %>% # joined_df now has: 'DateTime', 'Rain (mm)', 'Water Level (m)' 
+  # Create a date-only column for grouping
+  mutate(Date = as.Date(DateTime)) %>%
+  # Calculate total precipitation per day
+  group_by(Date) %>%
+  mutate(`Daily Precip (mm)` = sum(`Rain (mm)`, na.rm = TRUE)) %>%
+  ungroup() #flattens the data, allows for each row to be treated independently 
+
+plotting_data
+
+### QUESTIONS 2026-01-27 
+    #1. for now, the na.rm = TRUE is allowing me to ignore the missing values, what should I do with them?
+    #2. what exactly does the ungroup function do behind the scences? 
+
+#' 
+#' ### Plottling Daily Precipitation & Water Level Data (HOBO#2) 
+## ------------------------------------------------------------------------------------------------------------
+#3. using the plotly package and AI help to create the code, plot Daily Precip and Water Level. This graph entails using two different y axis, one for each variable  
+library(plotly)
+
+#3a. define the primary axis (as I learned from previous code), which goes to the background of the graph, so in this case, the primary axis is precipitation = y1_precip
+
+y1_precip <- list(
+  tickfont = list(color = "rgb(158,202,225)"), #this is the font color of the tick marks, color from plotly webpage
+  side = "left", # this is telling it that the y1 is the y axis on the left 
+  title = list(
+    text = "Daily Precipitation (mm)",
+    font = list(color = "rgb(158,202,225)"),
+    standoff = 20 # controls the distance between the numbers and the tickmarks
+    ), 
+  automargin = TRUE, #automatically resize the plot margins to fit the axis title and labels 
+  range = c(0, max(plotting_data$`Daily Precip (mm)`, na.rm = TRUE) * 1.2) #range defines the starting and ending points of the Y axis scale
+  #0 ensures the y axis starts exactly at 0 
+  #max finds the highest precipitation value in the data set, the na.rm = TRUE apparently is critical so that calculation doesn't fail. 
+  #*1.2 adds 20% buffer at the top of the graph 
+  )
+
+#3b. define the secondary axis (as I learned from previous code), goes to the foreground of the graph, so in this case, the secondary axis is the water level so that we can see it "on top" of the precip bars = y2_level 
+
+y2_level <- list(
+  tickfont = list(color = "rgb(8,48,107)"), 
+  overlaying = "y", # the specific command in plotly that creates a dual axis chart 
+  side = "right", #in contrast to the y1 axis, this one goes to the right 
+  title = list(
+    text = "Wetland Water Level (m)", 
+    font = list (color = "rgb(8,48,107)"), 
+    standoff = 20), 
+  automargin = TRUE)
+
+#3c. actually plotting the graph with the axis created above: fig25_wlp (water level dailyprecipitation)
+
+fig25_wldp <- plot_ly(plotting_data, width = 900, height = 500) %>% #using the plotting_data created above
+  add_bars(x = ~DateTime, y = ~`Daily Precip (mm)`, #add bars first as the primary axis
+           name = "Daily Precipitation (mm)",
+           marker = list(color = "rgb(158,202,225)")) %>%
+  add_lines(x = ~DateTime, y = ~`Water Level (m)`,  #add lines second as the secondary axis 
+            yaxis = "y2", # the connector for the secondary axis, ignores y1 and follows the y2 scale
+            name = "Wetland Water Level (m)", 
+            line = list(color = "rgb(8,48,107)", width = 1)) %>%
+  layout(
+    title = "Wetland Water Level vs. Daily Precipitation", 
+    xaxis = list(title = "Monthly Data 06/2025 to 12/2025",
+                 standoff = 5, 
+                 automargin = TRUE),
+    yaxis = y1_precip,
+    yaxis2 = y2_level, 
+    barmode = "relative", # relative vs. stack - positive values stack upwards from 0  
+    hovermode = "x unified", # tells the hover function of plotly to give both values at the same hovering time
+    legend = list(orientation = "h", x = 0.5, xanchor = "center", y = -0.15), 
+    # orientation = "h" changes the legend from a vertical list to a horizontal row 
+    #x = 0.5 and xanchor = "center", center the legend horizontally on the page 
+    #y = -0.5 places legend below the chart area, plotly coordinates: 0 = bottom of plot, 1 = top of plot
+    margin = list(b = 100, r = 80)
+  )
+
+fig25_wldp
+
