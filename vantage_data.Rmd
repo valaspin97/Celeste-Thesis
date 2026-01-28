@@ -9,8 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# 2025 Data Upload, Reorganization & Identifying Gaps 
-```{r}
+## 2025 Data Upload, Reorganization & Identifying Gaps 
+```{r include=FALSE}
+# Packages ------------------------------------------
 library(knitr)
 library(readr)
 library(dplyr)
@@ -21,7 +22,47 @@ library(tidyverse)
 library(data.table)
 ```
 
-## 06-2025 Data Upload & Reorganization 
+### 2025 Monthly Data Upload
+```{r}
+#1. start by uploading the data for each month of data from Vantage Pro, using the na = c() 
+
+#1a. June 2025 
+raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---")) # this replaces the --- values to NA
+
+#1b. July 2025 
+raw_jul25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-07.csv", na = c("", "---"))
+
+#1c. August 2025 
+raw_ago25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-08.csv", na = c("", "---"))
+
+#1d. September 2025 
+raw_sep25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-09.csv", na = c("", "---"))
+
+#1e. October 2025 
+raw_oct25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-10.csv", na = c("", "---"))
+
+#1f. November 2025 
+raw_nov25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-11.csv", na = c("", "---"))
+
+#1g. December 2025 
+raw_dec25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-12.csv", na = c("", "---"))
+```
+
+### Cleaning Up the Metada
+```{r}
+#2. merge the two metadata rows into one single row, with the words separated with and underscore _ 
+
+#2a. create the hdr to obtain the first two rows, the show_col_types = FALSE R recommended to add it
+hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"), n_max = 2, col_names = FALSE, show_col_types = FALSE)
+
+#2b. paste the two row names into one and separating them by _ 
+col_names <- paste(hdr[1, ], hdr[2, ], sep = "_") 
+
+
+```
+
+
+### 06-2025 Data Upload & Reorganization 
 ```{r}
 #1. upload data using read.csv and the file path 
 raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"))
@@ -29,6 +70,7 @@ raw_jun25 <- read.csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work
 #2. merge the two metadata rows in one
 hdr <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"), n_max = 2, col_names = FALSE)
 col_names <- paste(hdr[1, ], hdr[2, ], sep = "_")
+
 raw_jun25 <- read_csv("/Users/valeriaaspinall/Desktop/UGA Thesis Project /R Work - Thesis/Celeste Thesis/vantage_data/2025-06.csv", na = c("", "---"), skip = 2, col_names = col_names)
 
 #3. mutate the date and time stamps into one column: data_jun25
@@ -86,20 +128,29 @@ jun25_gap_data <- jun25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 jun25_gap_fig <- ggplot(jun25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_jun25, xend = end_jun25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "June 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-06"),
-       subtitle = "red bars indicate periods with no data",
-       x = "June 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 jun25_gap_fig
 ```
@@ -157,34 +208,30 @@ head(jul25_final)
 ##7a. deciding which variable to check, chose Out_Hum due to observation of it being lost first
 variable_to_check <- "Out_Hum" 
 
-jul25_gap_data <- jul25_final %>%
-  mutate(is_missing = is.na(!!sym(variable_to_check))) %>%
-  # Identify groups of consecutive TRUE (missing) values
-  mutate(gap_id = rleid(is_missing)) %>%
-  filter(is_missing == TRUE) %>%
-  group_by(gap_id) %>%
-  summarise(
-    start_time = min(DateTime),
-    end_time = max(DateTime),
-    duration_hours = as.numeric(difftime(max(DateTime), min(DateTime), units = "hours")) + 0.25
-  )
-
-##7a. creating a ggplot of the time gaps 
 jul25_gap_fig <- ggplot(jul25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_jul25, xend = end_jul25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "July 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-07"),
-       subtitle = "red bars indicate periods with no data",
-       x = "July 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 jul25_gap_fig
 ```
@@ -260,20 +307,29 @@ ago25_gap_data <- ago25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 ago25_gap_fig <- ggplot(ago25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_ago25, xend = end_ago25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "August 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-08"),
-       subtitle = "red bars indicate periods with no data",
-       x = "August 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 ago25_gap_fig
 ```
@@ -344,20 +400,29 @@ sep25_gap_data <- sep25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 sep25_gap_fig <- ggplot(sep25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_sep25, xend = end_sep25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "September 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-09"),
-       subtitle = "red bars indicate periods with no data",
-       x = "September 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 sep25_gap_fig
 ```
@@ -428,20 +493,29 @@ oct25_gap_data <- oct25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 oct25_gap_fig <- ggplot(oct25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_oct25, xend = end_oct25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "October 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-10"),
-       subtitle = "red bars indicate periods with no data",
-       x = "October 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 oct25_gap_fig
 ```
@@ -516,20 +590,29 @@ nov25_gap_data <- nov25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 nov25_gap_fig <- ggplot(nov25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_nov25, xend = end_nov25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "November 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-11"),
-       subtitle = "red bars indicate periods with no data",
-       x = "November 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 nov25_gap_fig
 ```
@@ -602,20 +685,29 @@ dec25_gap_data <- dec25_final %>%
 
 ##7a. creating a ggplot of the time gaps 
 dec25_gap_fig <- ggplot(dec25_gap_data) +
-  # Draw a background line representing the whole month
+  # drawing the background line representing the entire month
   annotate("segment", x = start_dec25, xend = end_dec25, y = 1, yend = 1, 
-           color = "grey80", size = 2) +
-  # Overlay red segments for the gaps
+           color = "grey", size = 2) +
+  # overlay red segments on the grey segment, representing the gaps
   geom_segment(aes(x = start_time, xend = end_time, y = 1, yend = 1), 
-               color = "red", size = 8) +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  theme_minimal() +
+               color = "red", size = 6) +
+  # with this code, add the scale and theme of the plot
+  scale_x_datetime(date_breaks = "4 days", date_labels = "%b %d") + # %b: Jan, Feb, Mar %d: day of the month
+  theme_minimal() + # this removes non-essential chart elements 
+  # here, the labels are consolidated
+  labs(
+    title = "December 2025",
+    subtitle = "red bars indicate periods with no data",
+    x = "", # no title for the x axis 
+    y = ""  # no title for the y axis
+    ) + 
+  # here, the code is used to style the text elements 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank()) +
-  labs(title = paste("Missing Data Intervals: 2025-12"),
-       subtitle = "red bars indicate periods with no data",
-       x = "Decemeber 2025", y = "Missing Gaps")
+        panel.grid.major.y = element_blank(), 
+        plot.title = element_text(size = 12),
+        plot.subtitle = element_text(size = 9, color = "grey40")
+  )
 
 dec25_gap_fig
 ```
@@ -649,6 +741,36 @@ corrected_all_months_25 <- lapply(all_months_25, fix_outtemp_column_name)
 
 final_all_months_25 <- bind_rows(corrected_all_months_25)
 ```
+```{r} 
+#plotting all the missing data graphs into on figure, two ways of doing it, using with the patchwork package or gridExtra package for ggplot2 
+
+library(gridExtra)
+library(grid)
+library(ggplot2)
+
+## code to plot all of the monthly gap plots in one single figure: 
+plots_list <- list(jun25_gap_fig, jul25_gap_fig , ago25_gap_fig, sep25_gap_fig, oct25_gap_fig, nov25_gap_fig, dec25_gap_fig)
+
+plots_clean <- lapply(plots_list, function(x) {x + theme(plot.title = element_text(size = 10))} + labs(y = NULL) + labs(subtitle = NULL))
+
+# creating the figure with a title, a caption and each plot cleanly stacked in rows as follows 
+fig_month_gaps <- grid.arrange(grobs = plots_clean, 
+                               nrow = 7, 
+                               ncol = 1, 
+                               top = textGrob("2025 Vantage Pro 2 Monthly Data Gaps", 
+                                  gp = gpar(fontsize = 18, fontface = "bold")),
+                               left = "", bottom = textGrob("Fig 1. Visualizing missing weather station data by month for 2025, red bars indicate missing time periods.", gp = gpar(fontsize = 12, fontface = "italic")))
+
+# using ggsave allows you to export the figure as a png for easier use
+ggsave("2025_DataGaps.png", fig_month_gaps,
+       width = 9,
+       height = 12,
+       units = "in", # inches obvio 
+       dpi = 300 # dots per incn, print quality
+       )
+```
+
+
 
 ## Plotly Trials using Precipitation as the Variable
 ```{r}
@@ -696,13 +818,6 @@ fig25_precip_bar <- fig25_precip_bar %>% layout(title = "Daily Precipitation at 
 
 fig25_precip_bar
 ```
-
-```{r}
-# turning this rmd file into an r script
-
-knitr::purl("vantage_data.Rmd", documentation = 2)
-```
-
 
 
 
